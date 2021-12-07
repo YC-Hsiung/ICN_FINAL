@@ -6,12 +6,13 @@ HOST, PORT = '127.0.0.1', 8888
 
 
 class Client():
-    def __init__(self):
+    def __init__(self, socket):
         self.filename = ''
         self.seq_num = 0
         self.id = 0
-        self.port = 0
+        self.port = PORT
         self.state = 'INIT'
+        self.socket = socket
 
     def send_request(self, request_type):
         header = request_type+' '+self.filename+'RTSP/1.0'+'\r\n'
@@ -21,6 +22,7 @@ class Client():
 
         else:
             header += "Session: " + self.id + '\r\n'
+        socket.send(header.encode('utf-8'))
 
     def setup(self):
         if self.state != 'INIT':
@@ -62,7 +64,7 @@ class Client():
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
-client = Client()
+client = Client(client_socket)
 while True:
     Filename = '123.mp4'
     seqnum = 0
