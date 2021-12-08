@@ -19,8 +19,16 @@ server_socket.listen(10)
 print("Server is listening")
 while(True):
     client, address = server_socket.accept()
-    # resolve RTP packet
-    request_type = ''
+    print(str(address)+" connected.")
+    request = str(client.recv(1024), encoding='utf-8') # may force encoding
+
+    # resolve RTSP packet type and version
+    request_lines = request.split('\r\n')
+    request_type = request_lines[0].split()[0]
+    rtsp_ver = request_lines[0].split()[-1]
+    if not rtsp_ver == 'RTSP/1.0':
+        raise ValueError("Unsupported RTSP version.")
+
     if request_type == 'SETUP':
         pass
     elif request_type == 'PLAY':
@@ -28,4 +36,5 @@ while(True):
     elif request_type == 'PAUSE':
         pass
     elif request_type == 'TEARDOWN':
+        # clean up
         client.close()

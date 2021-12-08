@@ -6,28 +6,32 @@ HOST, PORT = '127.0.0.1', 8888
 
 
 class Client():
-    def __init__(self):
+    def __init__(self, socket):
         self.filename = ''
         self.seq_num = 0
         self.id = 0
         self.port = 0
         self.state = 'INIT'
+        self.socket = socket
 
     def send_request(self, request_type):
+        print('Client: sending request', request_type)
         header = request_type+' '+self.filename+'RTSP/1.0'+'\r\n'
-        header += 'CSeq: '+self.seq_num+'\r\n'
+        header += 'CSeq: '+str(self.seq_num)+'\r\n'
         if request_type == "SETUP":
-            header += "Transport: RTP/UDP; client_port= " + self.port + '\r\n'
+            header += "Transport: RTP/UDP; client_port= " + str(self.port) + '\r\n'
 
         else:
             header += "Session: " + self.id + '\r\n'
+        message = header # TODO: add payload
+        self.socket.send(header.encode())
 
     def setup(self):
         if self.state != 'INIT':
             return
         self.seq_num = 1
         self.send_request('SETUP')
-        server_respond = 200
+        server_respond = 200 # TODO
         if server_respond == 200:
             self.state = 'READY'
 
@@ -62,9 +66,9 @@ class Client():
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
-client = Client()
+client = Client(client_socket)
 while True:
-    Filename = '123.mp4'
+    Filename = 'sample.mp4'
     seqnum = 0
     request_type = 'SETUP'
     if request_type == 'SETUP':
