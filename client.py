@@ -10,7 +10,7 @@ class Client():
         self.filename = ''
         self.seq_num = 0
         self.id = 0
-        self.port = 0
+        self.port = PORT
         self.state = 'INIT'
         self.socket = socket
 
@@ -23,8 +23,9 @@ class Client():
 
         else:
             header += "Session: " + self.id + '\r\n'
+
         message = header # TODO: add payload
-        self.socket.send(header.encode())
+        self.socket.send(header.encode('utf-8'))
 
     def setup(self):
         if self.state != 'INIT':
