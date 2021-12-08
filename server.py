@@ -6,9 +6,9 @@ HOST, PORT = '127.0.0.1', 8888
 
 
 class Server():
-    def __init__(self):
-        pass
-
+    def __init__(self, socket):
+        self.state = 'INIT'
+        self.socket = socket
 
 #################################
 
@@ -38,3 +38,5 @@ while(True):
     elif request_type == 'TEARDOWN':
         # clean up
         client.close()
+    else:
+        raise Exception('Unsupported request type')

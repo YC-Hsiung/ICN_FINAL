@@ -6,13 +6,14 @@ HOST, PORT = '127.0.0.1', 8888
 
 
 class Client():
-    def __init__(self, socket):
+    def __init__(self, host, port):
         self.filename = ''
         self.seq_num = 0
         self.id = 0
-        self.port = PORT
+        self.port = port
         self.state = 'INIT'
-        self.socket = socket
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((host, port))
 
     def send_request(self, request_type):
         print('Client: sending request', request_type)
@@ -26,6 +27,8 @@ class Client():
 
         message = header # TODO: add payload
         self.socket.send(header.encode('utf-8'))
+
+        # TODO: wait for response
 
     def setup(self):
         if self.state != 'INIT':
@@ -65,9 +68,7 @@ class Client():
 
 #########################################
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((HOST, PORT))
-client = Client(client_socket)
+client = Client(HOST, PORT)
 while True:
     Filename = 'sample.mp4'
     seqnum = 0
