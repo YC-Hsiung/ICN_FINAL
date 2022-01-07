@@ -44,7 +44,7 @@ class RTPPacket:
         return bytes((*self.header, *self.payload))
 
 
-class RTSP_Response_Type(Enum):
+class RTSP_Request_Type(Enum):
     INVALID = -1
     SETUP = 0
     PLAY = 1
