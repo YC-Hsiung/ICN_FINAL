@@ -1,6 +1,5 @@
 # %%
 import re
-from enum import Enum
 
 
 class RTPPacket:
@@ -44,20 +43,17 @@ class RTPPacket:
         return bytes((*self.header, *self.payload))
 
 
-class RTSP_Request_Type(Enum):
-    INVALID = -1
-    SETUP = 0
-    PLAY = 1
-    PAUSE = 2
-    TEARDOWN = 3
-    RESPONSE = 4
-
-
 class RTSPPacket:
     RTSP_VERSION = 'RTSP/1.0'
+    INVALID = -1
+    SETUP = 'SETUP'
+    PLAY = 'PLAY'
+    PAUSE = 'PAUSE'
+    TEARDOWN = 'TEARDOWN'
+    RESPONSE = 'RESPONSE'
 
     def __init__(self, resquest_type, video_path, seq_num, dst_port, session_id):
-        self.request_type = resquest_type.name
+        self.request_type = resquest_type
         self.video_path = video_path
         self.seq_num = seq_num
         self.dst_port = dst_port
