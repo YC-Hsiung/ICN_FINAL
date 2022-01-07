@@ -22,7 +22,7 @@ class Server():
         print("The RTSP server is listening...")
 
         self._client, self._client_addr = self._rtsp_socket.accept()
-        print(str(slef._client_addr)+" connected")
+        print(str(self._client_addr)+" connected")
 
         while self._state != 'FINISHED':
             packet = self._get_rtsp_packet()
@@ -70,7 +70,7 @@ class Server():
     
     def _setup(self, packet):
         # setup RTP
-        self._rtp_port = packet.dst_port # TODO: confirm?
+        self._rtp_port = packet.rtp_port
         self._rtp_socket.connect((self._client_addr, self._rtp_port))
         video_path = packet.video_file_path
         print(f"Video file path: {video_path}")
@@ -86,12 +86,12 @@ class Server():
         while True:
             event.wait()
 
-            frame = self._video_stream.get_next_frame()
-            frame_num = self._video_stream.current_frame_number
-            timestamp = frame_num // VideoStreaming.FPS * 1000
-
-            # EOF
-            if frame_num >= self._video_stream.len : #TODO: video length?
+            try:
+                frame = self._video_stream.get_next_frame()
+                frame_num = self._video_stream.current_frame_number
+                timestamp = frame_num // VideoStreaming.FPS * 1000
+            except EOFError as e:
+                # reached end of video
                 self._teardown()
                 break
 
@@ -100,8 +100,21 @@ class Server():
 
             # send RTP packet
             print(f"\tRTP thread: sending frame {frame_num}")
-            for i in range(len(packet)):
-                self._rtp_socket.send(packet[i]) # TODO: flow control?
+            packet_in_bytes = packet.getpacket()
+
+            # TODO: NEED TO BE MODIFIED
+            while packet_in_bytes:
+                try:
+                    self._rtp_socket.sendto(to_send[:RECV_BUFFER], 
+                            (self._client_addr, self._rtp_port))
+                except socket.error as e:
+                    print(f"failed to send rtp packet: {e}")
+                    break
+                # trim bytes sent
+                packet_in_bytes = packet_in_bytes[self.RECV_BUFFER:] 
+
+            sleep(1000//self.VideoStreaming.FPS/1000.) 
+            
 
     def _get_rtsp_packet(self):
         message = self._client.recv(RECV_BUFFER)
