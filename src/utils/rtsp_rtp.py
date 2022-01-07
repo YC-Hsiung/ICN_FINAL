@@ -120,7 +120,7 @@ class RTSPPacket:
     def to_request(self):
         request_lines = [
             f"{self.request_type} rtsp://{self.video_path} {self.RTSP_VERSION}",
-            f"CSeq: {self.sequence_number}",
+            f"CSeq: {self.seq_num}",
         ]
         if self.request_type == RTSPPacket.SETUP:
             request_lines.append(
