@@ -21,18 +21,18 @@ class Server():
         self._rtsp_socket.listen()
         print("The RTSP server is listening...")
 
-        self._client, self._client_addr = server.accept()
+        self._client, self._client_addr = self._rtsp_socket.accept()
         print(str(slef._client_addr)+" connected")
 
         while self._state != 'FINISHED':
             packet = self._get_rtsp_packet()
 
-            if packet.request_type = RTSPPacket.SETUP: # TODO
+            if packet.request_type == RTSPPacket.SETUP: # TODO
                 if self._state != "INIT":
                     raise Exception("SETUP request received while not in INIT state.")
                 self._setup()
 
-            elif packet.request_type = RTSPPacket.PLAY:
+            elif packet.request_type == RTSPPacket.PLAY:
                 if self._state == 'PLAYING': # already playing
                     print('Already playing')
                 elif self._state == 'INIT':
@@ -42,7 +42,7 @@ class Server():
                     print("Server state: PLAYING")
                     self._rtp_ctrl.set()
 
-            elif packet.request_type = RTSPPacket.PAUSE:
+            elif packet.request_type == RTSPPacket.PAUSE:
                 if self._state == 'READY': # already paused
                     print('Already paused.')
                 elif self._state == 'INIT':
@@ -52,7 +52,7 @@ class Server():
                     print("Server state: READY")
                     self._rtp_ctrl.clear()
 
-            elif packet.request_type = RTSPPacket.TEARDOWN:
+            elif packet.request_type == RTSPPacket.TEARDOWN:
                 self._teardown()
 
             # send RTSP response
@@ -91,7 +91,7 @@ class Server():
             timestamp = frame_num // VideoStreaming.FPS * 1000
 
             # EOF
-            if frame_num >= self._video_stream.??? : #TODO: video length?
+            if frame_num >= self._video_stream.len : #TODO: video length?
                 self._teardown()
                 break
 
