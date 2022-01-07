@@ -45,6 +45,7 @@ class RTPPacket:
 
 
 class RTSP_Response_Type(Enum):
+    INVALID = -1
     SETUP = 0
     PLAY = 1
     PAUSE = 2
