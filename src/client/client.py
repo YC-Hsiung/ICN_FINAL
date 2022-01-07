@@ -74,14 +74,15 @@ class Client:
         return RTPPacket.from_packet(recv)
 
     def _start_rtp_receive_thread(self):
+        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._rtp_socket.bind((self.DEFAULT_LOCAL_HOST, self.rtp_port))
+        self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
+        print("RTP port:", rtp_port)
         self._rtp_receive_thread = Thread(target=self._handle_video_receive)
         self._rtp_receive_thread.setDaemon(True)
         self._rtp_receive_thread.start()
 
     def _handle_video_receive(self):
-        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._rtp_socket.bind((self.DEFAULT_LOCAL_HOST, self.rtp_port))
-        self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
         while True:
             if not self.is_receiving_rtp:
                 sleep(self.RTP_SOFT_TIMEOUT/1000.)  # diminish cpu hogging
@@ -123,8 +124,8 @@ class Client:
         return self._get_response()
 
     def send_setup_request(self) -> RTSPPacket:
-        response = self._send_request(RTSPPacket.SETUP)
         self._start_rtp_receive_thread()
+        response = self._send_request(RTSPPacket.SETUP)
         self.session_id = response.session_id
         return response
 
