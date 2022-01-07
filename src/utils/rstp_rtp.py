@@ -1,9 +1,10 @@
 # %%
 import re
+from enum import Enum
 
 
 class RTPPacket:
-    HEADER_SIZE = 12  # bytes
+    HEADER_SIZE = 12
     VERSION = 0b10
     PADDING = 0b0
     EXTENSION = 0b0
@@ -43,11 +44,19 @@ class RTPPacket:
         return bytes((*self.header, *self.payload))
 
 
+class RTSP_Response_Type(Enum):
+    SETUP = 0
+    PLAY = 1
+    PAUSE = 2
+    TEARDOWN = 3
+    RESPONSE = 4
+
+
 class RTSPPacket:
     RTSP_VERSION = 'RTSP/1.0'
 
     def __init__(self, resquest_type, video_path, seq_num, dst_port, session_id):
-        self.request_type = resquest_type
+        self.request_type = resquest_type.name
         self.video_path = video_path
         self.seq_num = seq_num
         self.dst_port = dst_port
@@ -117,7 +126,7 @@ class RTSPPacket:
             f"{self.request_type} rtsp://{self.video_path} {self.RTSP_VERSION}",
             f"CSeq: {self.sequence_number}",
         ]
-        if self.request_type == 'SETUP':
+        if self.request_type == RTSPPacket.SETUP:
             request_lines.append(
                 f"Transport: RTP/UDP;client_port={self.dst_port}"
             )
