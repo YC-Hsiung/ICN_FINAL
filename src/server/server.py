@@ -2,6 +2,8 @@ import socket
 import threading
 from utils.video_streaming import VideoStreaming
 from utils.rtsp_rtp import RTPPacket, RTSPPacket
+
+from time import sleep 
  
 # global variable setting ######
 RECV_BUFFER = 4096
@@ -105,7 +107,7 @@ class Server():
             # TODO: NEED TO BE MODIFIED
             while packet_in_bytes:
                 try:
-                    self._rtp_socket.sendto(to_send[:RECV_BUFFER], 
+                    self._rtp_socket.sendto(packet_in_bytes[:RECV_BUFFER], 
                             (self._client_addr, self._rtp_port))
                 except socket.error as e:
                     print(f"failed to send rtp packet: {e}")
