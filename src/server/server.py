@@ -32,7 +32,7 @@ class Server():
             if packet.request_type == RTSPPacket.SETUP: # TODO
                 if self._state != "INIT":
                     raise Exception("SETUP request received while not in INIT state.")
-                self._setup()
+                self._setup(packet)
 
             elif packet.request_type == RTSPPacket.PLAY:
                 if self._state == 'PLAYING': # already playing
@@ -71,13 +71,19 @@ class Server():
 
     
     def _setup(self, packet):
-        # setup RTP
+        # setup RTP socket
         self._rtp_port = packet.rtp_port
+        self._client_addr = self._client_addr[0]
+        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print((self._client_addr, self._rtp_port))
         self._rtp_socket.connect((self._client_addr, self._rtp_port))
+
+        # setup video streaming
         video_path = packet.video_file_path
         print(f"Video file path: {video_path}")
         self._video_stream = VideoStreaming(video_path)
-        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # setup rtp thread
         self._rtp_ctrl = threading.Event()
         self._rtp_thread = threading.Thread(target=self._send_rtp_packet, args=(self._rtp_ctrl,))
         self._rtp_thread.setDaemon(True)
