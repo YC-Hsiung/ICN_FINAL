@@ -52,13 +52,12 @@ class RTSPPacket:
     TEARDOWN = 'TEARDOWN'
     RESPONSE = 'RESPONSE'
 
-    def __init__(self, resquest_type, video_path, seq_num, dst_port, session_id):
+    def __init__(self, resquest_type, video_path, seq_num, rtp_port, session_id):
         self.request_type = resquest_type
         self.video_path = video_path
         self.seq_num = seq_num
-        self.dst_port = dst_port
+        self.rtp_port = rtp_port
         self.session_id = session_id
-        self.dst_port = dst_port
 
     @classmethod
     def from_response(cls, response):
@@ -94,7 +93,7 @@ class RTSPPacket:
             r"(?P<request_type>\w+) rtsp://(?P<video_path>\S+) (?P<rtsp_version>RTSP/\d+.\d+)\r?\n"
             r"CSeq: (?P<seq_num>\d+)\r?\n"
             r"(Range: (?P<play_range>\w+=\d+-\d+\r?\n))?"
-            r"(Transport: .*client_port=(?P<dst_port>\d+).*\r?\n)?"
+            r"(Transport: .*client_port=(?P<rtp_port>\d+).*\r?\n)?"
             r"(Session: (?P<session_id>\d+)\r?\n)?",
             request.decode()
         )
@@ -104,17 +103,17 @@ class RTSPPacket:
 
         video_path = dic.get('video_path')
         seq_num = dic.get('seq_num')
-        dst_port = dic.get('dst_port')
+        rtp_port = dic.get('rtp_port')
         session_id = dic.get('session_id')
 
         if request_type == RTSPPacket.SETUP:
-            dst_port = int(dst_port)
+            rtp_port = int(rtp_port)
         sequence_number = int(seq_num)
         return cls(
             request_type,
             video_path,
             sequence_number,
-            dst_port,
+            rtp_port,
             session_id
         )
 
@@ -125,7 +124,7 @@ class RTSPPacket:
         ]
         if self.request_type == RTSPPacket.SETUP:
             request_lines.append(
-                f"Transport: RTP/UDP;client_port={self.dst_port}"
+                f"Transport: RTP/UDP;client_port={self.rtp_port}"
             )
         else:
             request_lines.append(
