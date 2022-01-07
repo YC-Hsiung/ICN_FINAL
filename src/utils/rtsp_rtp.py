@@ -52,8 +52,8 @@ class RTSPPacket:
     TEARDOWN = 'TEARDOWN'
     RESPONSE = 'RESPONSE'
 
-    def __init__(self, resquest_type, video_path, seq_num, rtp_port, session_id):
-        self.request_type = resquest_type
+    def __init__(self, request_type, video_path=None, seq_num=None, rtp_port=None, session_id=None):
+        self.request_type = request_type
         self.video_path = video_path
         self.seq_num = seq_num
         self.rtp_port = rtp_port
@@ -108,11 +108,11 @@ class RTSPPacket:
 
         if request_type == RTSPPacket.SETUP:
             rtp_port = int(rtp_port)
-        sequence_number = int(seq_num)
+        seq_num = int(seq_num)
         return cls(
             request_type,
             video_path,
-            sequence_number,
+            seq_num,
             rtp_port,
             session_id
         )
