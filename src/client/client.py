@@ -74,10 +74,13 @@ class Client:
         return RTPPacket.from_packet(recv)
 
     def _start_rtp_receive_thread(self):
+        # setup RTP socket before sending SETUP request
         self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._rtp_socket.bind((self.DEFAULT_LOCAL_HOST, self.rtp_port))
         self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
-        print("RTP port:", rtp_port)
+        print("RTP port:", self.rtp_port)
+
+        # start RTP thread
         self._rtp_receive_thread = Thread(target=self._handle_video_receive)
         self._rtp_receive_thread.setDaemon(True)
         self._rtp_receive_thread.start()

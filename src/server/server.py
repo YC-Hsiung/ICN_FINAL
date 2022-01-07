@@ -76,6 +76,8 @@ class Server():
         self._rtp_port = packet.rtp_port
         self._client_addr = self._client_addr[0]
         self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        print("connecting to RTP server:", (self._client_addr, self._rtp_port))
         self._rtp_socket.connect((self._client_addr, self._rtp_port))
 
         # setup video streaming
