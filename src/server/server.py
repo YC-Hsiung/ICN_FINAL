@@ -60,7 +60,7 @@ class Server():
             # send RTSP response
             response = RTSPPacket.build_response(packet.seq_num, SESSION_ID)
             print("sending response:", response)
-            self._client(response.encode())
+            self._client.sendto(response.encode(), (self._client_addr, self._rtsp_port))
 
     def _teardown(self):
         self._rtp_ctrl.clear()
@@ -77,11 +77,8 @@ class Server():
         self._client_addr = self._client_addr[0]
         self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        print("connecting to RTP server:", (self._client_addr, self._rtp_port))
-        self._rtp_socket.connect((self._client_addr, self._rtp_port))
-
         # setup video streaming
-        video_path = packet.video_file_path
+        video_path = packet.video_path
         print(f"Video file path: {video_path}")
         self._video_stream = VideoStreaming(video_path)
 
