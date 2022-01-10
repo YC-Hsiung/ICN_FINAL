@@ -71,13 +71,13 @@ class Client:
             except socket.timeout:
                 continue
         print(f"Received from server: {repr(recv)}")
-        return RTPPacket.from_packet(recv)
+        return RTPPacket.frompacket(recv)
 
     def _start_rtp_receive_thread(self):
         # setup RTP socket before sending SETUP request
         self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._rtp_socket.bind((self.DEFAULT_LOCAL_HOST, self.rtp_port))
-        self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
+        #  self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
         print("RTP port:", self.rtp_port)
 
         # start RTP thread

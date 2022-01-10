@@ -75,7 +75,7 @@ class Server():
         # setup RTP socket
         self._rtp_port = packet.rtp_port
         self._client_addr = self._client_addr[0]
-        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # setup video streaming
         video_path = packet.video_path
@@ -121,7 +121,7 @@ class Server():
                     print(f"failed to send rtp packet: {e}")
                     break
                 # trim bytes sent
-                packet_in_bytes = packet_in_bytes[self.RECV_BUFFER:] 
+                packet_in_bytes = packet_in_bytes[RECV_BUFFER:] 
             print("packet sent.")
 
             sleep(1000//self._video_stream.FPS/1000.) 
