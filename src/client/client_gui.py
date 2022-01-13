@@ -23,11 +23,8 @@ class ClientWindow(QMainWindow):
             parent=None):
         super(ClientWindow, self).__init__(parent)
         self.video_player = QLabel()
-        #self.video_player = QVideoWidget()
-        self.setup_button = QPushButton()
         self.play_button = QPushButton()
         self.tear_button = QPushButton()
-        self.error_label = QLabel()
 
         p = self.palette()
         p.setColor(QPalette.Window, Qt.black)
@@ -49,12 +46,8 @@ class ClientWindow(QMainWindow):
         self.setGeometry(350, 100, 1024, 500)
         self.setWindowIcon(QIcon(IMG_DIR+"player.png"))
 
-        # slider
+        # slider #TODO
         self.slider.setRange(0, 0)
-
-        self.setup_button.setEnabled(True)
-        self.setup_button.setText('Setup')
-        self.setup_button.clicked.connect(self.handle_setup)
 
         # play Btn
         self.play_button.setEnabled(False)
@@ -66,12 +59,7 @@ class ClientWindow(QMainWindow):
         self.tear_button.setText('Teardown')
         self.tear_button.clicked.connect(self.handle_teardown)
 
-        self.error_label.setSizePolicy(
-            QSizePolicy.Preferred,
-            QSizePolicy.Maximum)
-
-        
-
+    
         # slider
         self.slider.setRange(0,0)
 
@@ -83,7 +71,6 @@ class ClientWindow(QMainWindow):
         hboxLayout.setContentsMargins(0,0,0,0)
  
         #set widgets to the hbox layout
-        hboxLayout.addWidget(self.setup_button)
         hboxLayout.addWidget(self.play_button)
         hboxLayout.addWidget(self.slider)
         hboxLayout.addWidget(self.tear_button)
@@ -99,6 +86,7 @@ class ClientWindow(QMainWindow):
 
         central_widget.setLayout(vboxLayout)
 
+        self.handle_setup()
 
     def update_image(self):
         if not self._media_client.is_receiving_rtp:
@@ -111,7 +99,6 @@ class ClientWindow(QMainWindow):
     def handle_setup(self):
         self._media_client.establish_rtsp_connection()
         self._media_client.send_setup_request()
-        self.setup_button.setEnabled(False)
         self.play_button.setEnabled(True)
         self.tear_button.setEnabled(True)
         self._update_image_timer.start(1000//VideoStreaming.FPS)
@@ -128,12 +115,8 @@ class ClientWindow(QMainWindow):
 
     def handle_teardown(self):
         self._media_client.send_teardown_request()
-        self.setup_button.setEnabled(True)
         self.play_button.setEnabled(False)
+        self._media_client.close_rtsp_connection()
         exit(0)
 
-    def handle_error(self):
-        self.play_button.setEnabled(False)
-        self.tear_button.setEnabled(False)
-        self.error_label.setText(f"Error: {self.media_player.errorString()}")
 
