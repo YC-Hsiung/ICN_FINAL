@@ -75,7 +75,7 @@ class Server():
         # setup RTP socket
         self._rtp_port = packet.rtp_port
         self._client_addr = self._client_addr[0]
-        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # setup video streaming
         video_path = packet.video_path
@@ -86,6 +86,7 @@ class Server():
         self._rtp_ctrl = threading.Event()
         self._rtp_thread = threading.Thread(target=self._send_rtp_packet, args=(self._rtp_ctrl,))
         self._rtp_thread.setDaemon(True)
+        self._rtp_thread.start()
         self._state = 'READY'
         print("Server state: READY")
 
@@ -110,17 +111,20 @@ class Server():
             packet_in_bytes = packet.getpacket()
 
             # TODO: NEED TO BE MODIFIED
+            print("sending RTP packet: ")
             while packet_in_bytes:
                 try:
                     self._rtp_socket.sendto(packet_in_bytes[:RECV_BUFFER], 
                             (self._client_addr, self._rtp_port))
+                    print(packet_in_bytes[:RECV_BUFFER])
                 except socket.error as e:
                     print(f"failed to send rtp packet: {e}")
                     break
                 # trim bytes sent
-                packet_in_bytes = packet_in_bytes[self.RECV_BUFFER:] 
+                packet_in_bytes = packet_in_bytes[RECV_BUFFER:] 
+            print("packet sent.")
 
-            sleep(1000//self.VideoStreaming.FPS/1000.) 
+            sleep(1000//self._video_stream.FPS/1000.) 
             
 
     def _get_rtsp_packet(self):

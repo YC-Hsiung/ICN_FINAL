@@ -1,6 +1,5 @@
 import socket
 from threading import Thread
-from typing import Union, Optional, List, Tuple
 from time import sleep
 from PIL import Image
 from io import BytesIO
@@ -11,17 +10,8 @@ from utils.video_streaming import VideoStreaming
 
 class Client:
     DEFAULT_CHUNK_SIZE = 4096
-    DEFAULT_RECV_DELAY = 20  # in milliseconds
 
     DEFAULT_LOCAL_HOST = '127.0.0.1'
-
-    RTP_SOFT_TIMEOUT = 5  # in milliseconds
-    # for allowing simulated non-blocking operations
-    # (useful for keyboard break)
-    RTSP_SOFT_TIMEOUT = 100  # in milliseconds
-    # if it's present at the end of chunk, client assumes
-    # it's the last chunk for current frame (end of frame)
-    PACKET_HEADER_LENGTH = 5
 
     def __init__(
             self,
@@ -29,10 +19,11 @@ class Client:
             remote_host_address: str,
             remote_host_port: int,
             rtp_port: int):
-        self._rtsp_connection: Union[None, socket.socket] = None
-        self._rtp_socket: Union[None, socket.socket] = None
-        self._rtp_receive_thread: Union[None, Thread] = None
-        self._frame_buffer: List[Image.Image] = []
+
+        self._rtsp_connection = None
+        self._rtp_socket = None
+        self._rtp_receive_thread = None
+        self._frame_buffer = []
         self._current_sequence_number = 0
         self.session_id = ''
 
@@ -42,27 +33,26 @@ class Client:
         self.is_receiving_rtp = False
 
         self.file_path = file_path
-        self.remote_host_address = remote_host_address
+        self.remote_host_addr = remote_host_address
         self.remote_host_port = remote_host_port
         self.rtp_port = rtp_port
 
-    def get_next_frame(self) -> Optional[Tuple[Image.Image, int]]:
+
+    def get_next_frame(self):
         if self._frame_buffer:
             self.current_frame_number += 1
-            # skip 5 bytes which contain frame length in bytes
             return self._frame_buffer.pop(0), self.current_frame_number
         return None
 
     @staticmethod
-    def _get_frame_from_packet(packet: RTPPacket) -> Image.Image:
+    def _get_frame_from_packet(packet):
         # the payload is already the jpeg
         raw = packet.payload
         frame = Image.open(BytesIO(raw))
         return frame
 
-    def _recv_rtp_packet(self, size=DEFAULT_CHUNK_SIZE) -> RTPPacket:
+    def _recv_rtp_packet(self, size=DEFAULT_CHUNK_SIZE):
         recv = bytes()
-        print('Waiting RTP packet...')
         while True:
             try:
                 recv += self._rtp_socket.recv(size)
@@ -70,14 +60,14 @@ class Client:
                     break
             except socket.timeout:
                 continue
-        print(f"Received from server: {repr(recv)}")
-        return RTPPacket.from_packet(recv)
+        # print(f"Received from server: {repr(recv)}")
+        return RTPPacket.frompacket(recv)
 
     def _start_rtp_receive_thread(self):
         # setup RTP socket before sending SETUP request
         self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._rtp_socket.bind((self.DEFAULT_LOCAL_HOST, self.rtp_port))
-        self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
+        #  self._rtp_socket.settimeout(self.RTP_SOFT_TIMEOUT / 1000.)
         print("RTP port:", self.rtp_port)
 
         # start RTP thread
@@ -88,32 +78,29 @@ class Client:
     def _handle_video_receive(self):
         while True:
             if not self.is_receiving_rtp:
-                sleep(self.RTP_SOFT_TIMEOUT/1000.)  # diminish cpu hogging
+                sleep( 5 / 1000.)  # diminish cpu hogging RTP_SOFT_TIMEOUT = 5
                 continue
             packet = self._recv_rtp_packet()
             frame = self._get_frame_from_packet(packet)
             self._frame_buffer.append(frame)
 
     def establish_rtsp_connection(self):
-        if self.is_rtsp_connected:
-            print('RTSP is already connected.')
-            return
-        print(f"Connecting to {self.remote_host_address}:{self.remote_host_port}...")
+        # if self.is_rtsp_connected:
+        #     print('RTSP is already connected.')
+        #     return
+        print(f"Connecting to {self.remote_host_addr}:{self.remote_host_port}...")
         self._rtsp_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._rtsp_connection.connect((self.remote_host_address, self.remote_host_port))
-        self._rtsp_connection.settimeout(self.RTSP_SOFT_TIMEOUT / 1000.)
+        self._rtsp_connection.connect((self.remote_host_addr, self.remote_host_port))
+        self._rtsp_connection.settimeout(100 / 1000.) ## RSTP_SOFT_TIMEOUT = 100
         self.is_rtsp_connected = True
 
     def close_rtsp_connection(self):
-        if not self.is_rtsp_connected:
-            print('RTSP is not connected.')
-            return
         self._rtsp_connection.close()
         self.is_rtsp_connected = False
-
-    def _send_request(self, request_type=RTSPPacket.INVALID) -> RTSPPacket:
-        if not self.is_rtsp_connected:
-            raise Exception('rtsp connection not established. run `setup_rtsp_connection()`')
+    
+    def _send_request(self, request_type=RTSPPacket.INVALID):
+        # if not self.is_rtsp_connected:
+        #     raise Exception('rtsp connection not established. run `setup_rtsp_connection()`')
         request = RTSPPacket(
             request_type,
             self.file_path,
@@ -121,34 +108,33 @@ class Client:
             self.rtp_port,
             self.session_id
         ).to_request()
-        print(f"Sending request: {repr(request)}")
         self._rtsp_connection.send(request)
         self._current_sequence_number += 1
         return self._get_response()
 
-    def send_setup_request(self) -> RTSPPacket:
+    def send_setup_request(self):
         self._start_rtp_receive_thread()
         response = self._send_request(RTSPPacket.SETUP)
         self.session_id = response.session_id
         return response
 
-    def send_play_request(self) -> RTSPPacket:
+    def send_play_request(self):
         response = self._send_request(RTSPPacket.PLAY)
         self.is_receiving_rtp = True
         return response
 
-    def send_pause_request(self) -> RTSPPacket:
+    def send_pause_request(self):
         response = self._send_request(RTSPPacket.PAUSE)
         self.is_receiving_rtp = False
         return response
 
-    def send_teardown_request(self) -> RTSPPacket:
+    def send_teardown_request(self):
         response = self._send_request(RTSPPacket.TEARDOWN)
         self.is_receiving_rtp = False
         self.is_rtsp_connected = False
         return response
 
-    def _get_response(self, size=DEFAULT_CHUNK_SIZE) -> RTSPPacket:
+    def _get_response(self, size=DEFAULT_CHUNK_SIZE):
         rcv = None
         while True:
             try:
@@ -156,6 +142,6 @@ class Client:
                 break
             except socket.timeout:
                 continue
-        print(f"Received from server: {repr(rcv)}")
+        # print(f"Received from server: {repr(rcv)}")
         response = RTSPPacket.from_response(rcv)
         return response
