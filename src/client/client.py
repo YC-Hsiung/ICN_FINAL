@@ -11,7 +11,6 @@ from utils.video_streaming import VideoStreaming
 
 class Client:
     DEFAULT_CHUNK_SIZE = 4096
-    DEFAULT_RECV_DELAY = 20  # in milliseconds
 
     DEFAULT_LOCAL_HOST = '127.0.0.1'
 
@@ -21,7 +20,6 @@ class Client:
     RTSP_SOFT_TIMEOUT = 100  # in milliseconds
     # if it's present at the end of chunk, client assumes
     # it's the last chunk for current frame (end of frame)
-    PACKET_HEADER_LENGTH = 5
 
     def __init__(
             self,
@@ -88,7 +86,7 @@ class Client:
     def _handle_video_receive(self):
         while True:
             if not self.is_receiving_rtp:
-                sleep(self.RTP_SOFT_TIMEOUT/1000.)  # diminish cpu hogging
+                sleep( 5 / 1000.)  # diminish cpu hogging RTP_SOFT_TIMEOUT = 5
                 continue
             packet = self._recv_rtp_packet()
             frame = self._get_frame_from_packet(packet)
@@ -101,7 +99,7 @@ class Client:
         print(f"Connecting to {self.remote_host_address}:{self.remote_host_port}...")
         self._rtsp_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._rtsp_connection.connect((self.remote_host_address, self.remote_host_port))
-        self._rtsp_connection.settimeout(self.RTSP_SOFT_TIMEOUT / 1000.)
+        self._rtsp_connection.settimeout(100 / 1000.) ## RSTP_SOFT_TIMEOUT = 100
         self.is_rtsp_connected = True
 
     def close_rtsp_connection(self):
