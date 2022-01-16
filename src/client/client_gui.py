@@ -11,6 +11,7 @@ from utils.video_streaming import VideoStreaming
 
 IMG_DIR = "image/"
 
+
 class ClientWindow(QMainWindow):
     _update_image_signal = pyqtSignal()
 
@@ -33,11 +34,12 @@ class ClientWindow(QMainWindow):
         self.is_playing = False
         self.slider = QSlider(Qt.Horizontal)
 
-        self._media_client = Client(file_name, host_address, host_port, rtp_port)
+        self._media_client = Client(
+            file_name, host_address, host_port, rtp_port)
         self._update_image_signal.connect(self.update_image)
         self._update_image_timer = QTimer()
-        self._update_image_timer.timeout.connect(self._update_image_signal.emit)
-
+        self._update_image_timer.timeout.connect(
+            self._update_image_signal.emit)
 
         self.init_ui()
 
@@ -46,36 +48,32 @@ class ClientWindow(QMainWindow):
         self.setGeometry(350, 100, 1024, 500)
         self.setWindowIcon(QIcon(IMG_DIR+"player.png"))
 
-        # slider #TODO
-        self.slider.setRange(0, 0)
-
         # play Btn
         self.play_button.setEnabled(False)
-        self.play_button.setIcon( self.style().standardIcon(QStyle.SP_MediaPlay) )
+        self.play_button.setIcon(
+            self.style().standardIcon(QStyle.SP_MediaPlay))
         self.play_button.clicked.connect(self.handle_play)
-
 
         self.tear_button.setEnabled(False)
         self.tear_button.setText('Teardown')
         self.tear_button.clicked.connect(self.handle_teardown)
 
-    
         # slider
-        self.slider.setRange(0,0)
+        self.slider.setRange(0, 1000)
 
         self.label = QLabel()
         self.label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
-        #create hbox layout
+        # create hbox layout
         hboxLayout = QHBoxLayout()
-        hboxLayout.setContentsMargins(0,0,0,0)
- 
-        #set widgets to the hbox layout
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
+
+        # set widgets to the hbox layout
         hboxLayout.addWidget(self.play_button)
         hboxLayout.addWidget(self.slider)
         hboxLayout.addWidget(self.tear_button)
 
-        #create vbox layout
+        # create vbox layout
         vboxLayout = QVBoxLayout()
         vboxLayout.addWidget(self.video_player)
         vboxLayout.addLayout(hboxLayout)
@@ -96,6 +94,9 @@ class ClientWindow(QMainWindow):
             pix = QPixmap.fromImage(ImageQt(frame[0]).copy())
             self.video_player.setPixmap(pix)
 
+            self.slider.setValue(int(
+                self._media_client.current_frame_number/self._media_client.total_frame_number*1000))
+
     def handle_setup(self):
         self._media_client.establish_rtsp_connection()
         self._media_client.send_setup_request()
@@ -104,13 +105,15 @@ class ClientWindow(QMainWindow):
         self._update_image_timer.start(1000//VideoStreaming.FPS)
 
     def handle_play(self):
-        if not self.is_playing: ## play request
+        if not self.is_playing:  # play request
             self._media_client.send_play_request()
-            self.play_button.setIcon( self.style().standardIcon(QStyle.SP_MediaPause) )
+            self.play_button.setIcon(
+                self.style().standardIcon(QStyle.SP_MediaPause))
             self.is_playing = True
-        else:                   ## pause request
+        else:  # pause request
             self._media_client.send_pause_request()
-            self.play_button.setIcon( self.style().standardIcon(QStyle.SP_MediaPlay) )
+            self.play_button.setIcon(
+                self.style().standardIcon(QStyle.SP_MediaPlay))
             self.is_playing = False
 
     def handle_teardown(self):
@@ -118,5 +121,3 @@ class ClientWindow(QMainWindow):
         self.play_button.setEnabled(False)
         self._media_client.close_rtsp_connection()
         exit(0)
-
-

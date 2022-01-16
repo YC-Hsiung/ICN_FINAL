@@ -28,6 +28,7 @@ class Client:
         self.session_id = ''
 
         self.current_frame_number = -1
+        self.total_frame_number = 0
 
         self.is_rtsp_connected = False
         self.is_receiving_rtp = False
@@ -37,9 +38,8 @@ class Client:
         self.remote_host_port = remote_host_port
         self.rtp_port = rtp_port
 
-
     def get_next_frame(self):
-        if self._frame_buffer:
+        if self._frame_buffer != []:
             self.current_frame_number += 1
             return self._frame_buffer.pop(0), self.current_frame_number
         return None
@@ -76,11 +76,20 @@ class Client:
         self._rtp_receive_thread.start()
 
     def _handle_video_receive(self):
+        first_package = True
         while True:
             if not self.is_receiving_rtp:
-                sleep( 5 / 1000.)  # diminish cpu hogging RTP_SOFT_TIMEOUT = 5
+                sleep(5 / 1000.)  # diminish cpu hogging RTP_SOFT_TIMEOUT = 5
                 continue
             packet = self._recv_rtp_packet()
+            if first_package:
+                if packet.payload == VideoStreaming.JPEG_EOF:
+                    self.total_frame_number = packet.seq_num
+                    first_package = False
+                    continue
+                else:
+                    raise IOError
+
             frame = self._get_frame_from_packet(packet)
             self._frame_buffer.append(frame)
 
@@ -88,16 +97,20 @@ class Client:
         # if self.is_rtsp_connected:
         #     print('RTSP is already connected.')
         #     return
-        print(f"Connecting to {self.remote_host_addr}:{self.remote_host_port}...")
-        self._rtsp_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._rtsp_connection.connect((self.remote_host_addr, self.remote_host_port))
-        self._rtsp_connection.settimeout(100 / 1000.) ## RSTP_SOFT_TIMEOUT = 100
+        print(
+            f"Connecting to {self.remote_host_addr}:{self.remote_host_port}...")
+        self._rtsp_connection = socket.socket(
+            socket.AF_INET, socket.SOCK_STREAM)
+        self._rtsp_connection.connect(
+            (self.remote_host_addr, self.remote_host_port))
+        self._rtsp_connection.settimeout(
+            100 / 1000.)  # RSTP_SOFT_TIMEOUT = 100
         self.is_rtsp_connected = True
 
     def close_rtsp_connection(self):
         self._rtsp_connection.close()
         self.is_rtsp_connected = False
-    
+
     def _send_request(self, request_type=RTSPPacket.INVALID):
         # if not self.is_rtsp_connected:
         #     raise Exception('rtsp connection not established. run `setup_rtsp_connection()`')
