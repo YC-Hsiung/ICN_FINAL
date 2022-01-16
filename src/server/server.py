@@ -20,6 +20,7 @@ class Server():
     def run(self):
         # wait for setup
         self._rtsp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._rtsp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
         self._rtsp_socket.bind((self._host, self._rtsp_port))
         self._rtsp_socket.listen()
         print("The RTSP server is listening...")
@@ -80,6 +81,7 @@ class Server():
         self._rtp_port = packet.rtp_port
         self._client_addr = self._client_addr[0]
         self._rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._rtp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
 
         # setup video streaming
         video_path = packet.video_path
