@@ -46,7 +46,7 @@ class Client:
                 return self._frame_buffer[0], self.current_frame_number
         elif self.src_type == 'file':
             if len(self._frame_buffer) > self.current_frame_number:
-                print( len(self._frame_buffer), self.current_frame_number)
+                print("buffer len, frame_num =", len(self._frame_buffer), self.current_frame_number)
                 self.current_frame_number += 1
                 return self._frame_buffer[self.current_frame_number-1], self.current_frame_number
         return None

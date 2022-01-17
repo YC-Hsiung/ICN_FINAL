@@ -36,13 +36,12 @@ class ClientWindow(QMainWindow):
 
         self._media_client = Client(
             file_name, host_address, host_port, rtp_port, src_type)
-        self._update_image_signal.connect(self.update_image)
 
         self.slider = QSlider(Qt.Horizontal)    
         self.slider.setMinimum(0)
-        self.slider.setMaximum(self._media_client.total_frame_number)
-        #self.slider.sliderMoved.connect(self.slider_moved)
+        self.slider.sliderMoved.connect(self.slider_moved)
 
+        self._update_image_signal.connect(self.update_image)
         self._update_image_timer = QTimer()
         self._update_image_timer.timeout.connect(
             self._update_image_signal.emit)
@@ -65,7 +64,8 @@ class ClientWindow(QMainWindow):
         self.tear_button.clicked.connect(self.handle_teardown)
 
         # slider
-        self.slider.setRange(0, self._media_client.total_frame_number)
+        #self.slider.setRange(0, self._media_client.total_frame_number)
+        #self.slider.setRange(0, 500)
 
         self.label = QLabel()
         self.label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
@@ -92,8 +92,15 @@ class ClientWindow(QMainWindow):
 
         self.handle_setup()
 
+    # def slider_moved(self, frame_num):
+    #     #self._media_client.current_frame_number = frame_num
+    #     frame = self._media_client.get_next_frame()
+    #     if not frame : return
+    #     pix = QPixmap.fromImage(ImageQt(frame[0]).copy())
+    #     self.video_player.setPixmap(pix)
+
     def slider_moved(self, frame_num):
-        self._media_client.current_frame_number = frame_num
+        self._media_client.current_frame_number = self.slider.value()
         frame = self._media_client.get_next_frame()
         if not frame : 
             ## TODO render loading image
@@ -101,19 +108,21 @@ class ClientWindow(QMainWindow):
         pix = QPixmap.fromImage(ImageQt(frame[0]).copy())
         self.video_player.setPixmap(pix)
 
-
     def update_image(self):
         if not self._media_client.is_receiving_rtp:
             return
+        self.slider.setRange(0, self._media_client.total_frame_number)
         self.slider_moved(self._media_client.current_frame_number)
-        self.slider.setValue(self._media_client.current_frame_number)
+        self.slider.setValue( self._media_client.current_frame_number )
         # frame = self._media_client.get_next_frame()
         # if frame is not None:
         #     pix = QPixmap.fromImage(ImageQt(frame[0]).copy())
         #     self.video_player.setPixmap(pix)
-
-            # self.slider.setValue(int(
-            #     self._media_client.current_frame_number/self._media_client.total_frame_number*1000))
+        #     print("current frame num =", self._media_client.current_frame_number)
+        #     self.slider.setValue( int(self._media_client.current_frame_number) )
+        #     # self.slider.setValue(int(
+        #     #     self._media_client.current_frame_number/self._media_client.total_frame_number*1000))
+        #     print("Slider value ",self.slider.value())
 
     def handle_setup(self):
         self._media_client.establish_rtsp_connection()
