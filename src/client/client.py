@@ -22,7 +22,7 @@ class Client:
             src_type
             ):
 
-        self.src_type = src_type
+        self.src_type = src_type # either file or webcam
         self._rtsp_connection = None
         self._rtp_socket = None
         self._rtp_receive_thread = None
@@ -30,7 +30,7 @@ class Client:
         self._current_sequence_number = 0
         self.session_id = ''
 
-        self.current_frame_number = -1
+        self.current_frame_number = 0
         self.total_frame_number = 0
 
         self.is_rtsp_connected = False
@@ -41,13 +41,19 @@ class Client:
         self.rtp_port = rtp_port
 
     def get_next_frame(self):
-        if self._frame_buffer != []:
-            self.current_frame_number += 1
-            if self.src_type == 'file':
-                return self._frame_buffer.pop(0), self.current_frame_number
-            if self.src_type == 'webcam':
+        if self.src_type == 'webcam':
+            if self._frame_buffer:
                 return self._frame_buffer[0], self.current_frame_number
+        elif self.src_type == 'file':
+            if len(self._frame_buffer) > self.current_frame_number:
+                print( len(self._frame_buffer), self.current_frame_number)
+                self.current_frame_number += 1
+                return self._frame_buffer[self.current_frame_number-1], self.current_frame_number
         return None
+
+    # def get_frame(self, frame_num):
+    #     if self.current_frame_number >= frame_num:
+
 
     @staticmethod
     def _get_frame_from_packet(packet):
