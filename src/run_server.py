@@ -5,6 +5,6 @@ PORT = 8888
 
 if __name__ == "__main__":
     while True:
-        server = Server(HOST, PORT)
+        server = Server(HOST, PORT, 'webcam')
         server.run()
 

@@ -2,6 +2,7 @@ import socket
 import threading
 from utils.video_streaming import VideoStreaming
 from utils.rtsp_rtp import RTPPacket, RTSPPacket
+import time
 
 from time import sleep
 
@@ -11,11 +12,18 @@ SESSION_ID = 0
 
 
 class Server():
-    def __init__(self, host, port):
+    def __init__(self, host, port, stream_type='file'):
         self._state = 'INIT'
         print("Server state: INIT")
         self._host = host
         self._rtsp_port = port
+        self.stream_type = stream_type
+        if self.stream_type == 'file':
+            self.send_period = 1000//VideoStreaming.FPS/1000.
+        elif self.stream_type == 'webcam':
+            self.send_period = 1.0/40
+        else:
+            raise Exception('Unsupported source type.')
 
     def run(self):
         # wait for setup
@@ -86,7 +94,7 @@ class Server():
         # setup video streaming
         video_path = packet.video_path
         print(f"Video file path: {video_path}")
-        self._video_stream = VideoStreaming(video_path)
+        self._video_stream = VideoStreaming(video_path, src_type=self.stream_type)
         # setup rtp thread
         self._rtp_ctrl = threading.Event()
         self._rtp_thread = threading.Thread(
@@ -100,6 +108,7 @@ class Server():
         first_package = True
         while True:
             event.wait()
+            time_start = time.process_time()
             if first_package:
                 packet = RTPPacket(
                     26, self._video_stream.video_length, -1, self._video_stream.JPEG_EOF)
@@ -108,6 +117,8 @@ class Server():
                 try:
                     frame = self._video_stream.get_next_frame()
                     frame_num = self._video_stream.current_frame_number
+                    print(frame_num)
+                    print(frame[:10], frame[-10:])
                     timestamp = frame_num // VideoStreaming.FPS * 1000
                     # reached end of video
                     if not frame:
@@ -136,10 +147,22 @@ class Server():
                 # trim bytes sent
                 packet_in_bytes = packet_in_bytes[RECV_BUFFER:]
             print("packet sent.")
+            time_end = time.process_time()
+            elapsed_time = time_end - time_start
 
-            sleep(1000//self._video_stream.FPS/1000.)
+            if elapsed_time < self.send_period:
+                self._better_sleep(self.send_period-elapsed_time)
 
     def _get_rtsp_packet(self):
         message = self._client.recv(RECV_BUFFER)
         packet = RTSPPacket.from_request(message)
         return packet
+    
+    def _better_sleep(self, sec, expected_inaccuracy=0.3):
+        start = time.process_time()
+        end = start+sec
+        if sec-expected_inaccuracy > 0:
+            time.sleep(sec-expected_inaccuracy)
+        while time.process_time() < end:
+            continue
+        return
