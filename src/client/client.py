@@ -15,11 +15,14 @@ class Client:
 
     def __init__(
             self,
-            file_path: str,
-            remote_host_address: str,
-            remote_host_port: int,
-            rtp_port: int):
+            file_path,
+            remote_host_address,
+            remote_host_port,
+            rtp_port,
+            src_type
+            ):
 
+        self.src_type = src_type
         self._rtsp_connection = None
         self._rtp_socket = None
         self._rtp_receive_thread = None
@@ -32,7 +35,6 @@ class Client:
 
         self.is_rtsp_connected = False
         self.is_receiving_rtp = False
-
         self.file_path = file_path
         self.remote_host_addr = remote_host_address
         self.remote_host_port = remote_host_port
@@ -41,7 +43,10 @@ class Client:
     def get_next_frame(self):
         if self._frame_buffer != []:
             self.current_frame_number += 1
-            return self._frame_buffer.pop(0), self.current_frame_number
+            if self.src_type == 'file':
+                return self._frame_buffer.pop(0), self.current_frame_number
+            if self.src_type == 'webcam':
+                return self._frame_buffer[0], self.current_frame_number
         return None
 
     @staticmethod
@@ -92,6 +97,9 @@ class Client:
 
             frame = self._get_frame_from_packet(packet)
             self._frame_buffer.append(frame)
+            if self.src_type == 'webcam':
+                if len(self._frame_buffer)>1:
+                    self._frame_buffer.pop(0)
 
     def establish_rtsp_connection(self):
         # if self.is_rtsp_connected:

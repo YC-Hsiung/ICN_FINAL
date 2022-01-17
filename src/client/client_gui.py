@@ -17,10 +17,11 @@ class ClientWindow(QMainWindow):
 
     def __init__(
             self,
-            file_name: str,
-            host_address: str,
-            host_port: int,
-            rtp_port: int,
+            file_name,
+            host_address,
+            host_port,
+            rtp_port,
+            src_type,
             parent=None):
         super(ClientWindow, self).__init__(parent)
         self.video_player = QLabel()
@@ -35,7 +36,7 @@ class ClientWindow(QMainWindow):
         self.slider = QSlider(Qt.Horizontal)
 
         self._media_client = Client(
-            file_name, host_address, host_port, rtp_port)
+            file_name, host_address, host_port, rtp_port, src_type)
         self._update_image_signal.connect(self.update_image)
         self._update_image_timer = QTimer()
         self._update_image_timer.timeout.connect(
