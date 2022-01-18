@@ -3,4 +3,4 @@ server_port=8888
 client_host=127.0.0.1
 client_rtp_port=7777
 src_type=file
-file_path='../src_movie.mjpeg'
+file_path='../movie2.mjpeg'
