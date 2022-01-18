@@ -7,7 +7,7 @@ import time
 from time import sleep
 
 # global variable setting ######
-RECV_BUFFER = 4096
+RECV_BUFFER = 2**13
 SESSION_ID = 0
 
 
@@ -39,7 +39,7 @@ class Server():
         while self._state != 'FINISHED':
             packet = self._get_rtsp_packet()
 
-            if packet.request_type == RTSPPacket.SETUP:  # TODO
+            if packet.request_type == RTSPPacket.SETUP:
                 if self._state != "INIT":
                     raise Exception(
                         "SETUP request received while not in INIT state.")
@@ -118,7 +118,7 @@ class Server():
                     frame = self._video_stream.get_next_frame()
                     frame_num = self._video_stream.current_frame_number
                     print(frame_num)
-                    print(frame[:10], frame[-10:])
+                    #  print(frame[:10], frame[-10:])
                     timestamp = frame_num // VideoStreaming.FPS * 1000
                     # reached end of video
                     if not frame:
@@ -134,17 +134,11 @@ class Server():
                 print(f"\tRTP thread: sending frame {frame_num}")
             packet_in_bytes = packet.getpacket()
 
-            # TODO: NEED TO BE MODIFIED
             print("sending RTP packet: ")
             while packet_in_bytes:
-                try:
-                    self._rtp_socket.sendto(packet_in_bytes[:RECV_BUFFER],
-                                            (self._client_addr, self._rtp_port))
-                    print(packet_in_bytes[:RECV_BUFFER])
-                except socket.error as e:
-                    print(f"failed to send rtp packet: {e}")
-                    break
-                # trim bytes sent
+                self._rtp_socket.sendto(packet_in_bytes[:RECV_BUFFER],
+                                        (self._client_addr, self._rtp_port))
+                print(packet_in_bytes[:RECV_BUFFER])
                 packet_in_bytes = packet_in_bytes[RECV_BUFFER:]
             print("packet sent.")
             time_end = time.process_time()

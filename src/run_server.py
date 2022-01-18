@@ -1,11 +1,21 @@
 from server.server import Server
 import sys
-HOST = '127.0.0.1'
-PORT = 8888
-src_type = 'file' # 'file' or 'webcam'
 
 if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print(f"Usage: {sys.argv[0].split('/')[-1]} <server address> <server port> <source type>")
+        exit(-1)
+
+    server_address, server_port, src_type = *sys.argv[1:],
+
+    try:
+        server_port = int(server_port)
+    except ValueError:
+        raise ValueError('port values should be integer')
+    if src_type not in ['file', 'webcam']:
+        raise ValueError("source type can only be 'webcam' or 'file'")
+     
     while True:
-        server = Server(HOST, PORT, src_type)
+        server = Server(server_address, server_port, src_type)
         server.run()
 

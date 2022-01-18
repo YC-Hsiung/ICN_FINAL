@@ -9,7 +9,7 @@ from utils.video_streaming import VideoStreaming
 
 
 class Client:
-    DEFAULT_CHUNK_SIZE = 4096
+    RECV_BUFFER = 2**15
 
     DEFAULT_LOCAL_HOST = '127.0.0.1'
 
@@ -62,7 +62,7 @@ class Client:
         frame = Image.open(BytesIO(raw))
         return frame
 
-    def _recv_rtp_packet(self, size=DEFAULT_CHUNK_SIZE):
+    def _recv_rtp_packet(self, size=RECV_BUFFER):
         recv = bytes()
         while True:
             try:
@@ -161,7 +161,7 @@ class Client:
         self.is_rtsp_connected = False
         return response
 
-    def _get_response(self, size=DEFAULT_CHUNK_SIZE):
+    def _get_response(self, size=RECV_BUFFER):
         rcv = None
         while True:
             try:
