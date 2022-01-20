@@ -7,7 +7,7 @@ if __name__ == '__main__':
     import sys
 
     if len(sys.argv) < 5:
-        print(f"Usage: {sys.argv[0].split('/')[-1]} <file name> <host address> <host port> <RTP port> <source type>")
+        print(f"Usage: python {sys.argv[0].split('/')[-1]} <file name> <host address> <host port> <RTP port> <source type>")
         exit(-1)
 
     file_name, host_address, host_port, rtp_port, src_type = *sys.argv[1:],

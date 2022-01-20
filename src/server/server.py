@@ -14,7 +14,7 @@ SESSION_ID = 0
 class Server():
     def __init__(self, host, port, stream_type='file'):
         self._state = 'INIT'
-        print("Server state: INIT")
+        #  print("Server state: INIT")
         self._host = host
         self._rtsp_port = port
         self.stream_type = stream_type
@@ -53,7 +53,7 @@ class Server():
                         "PLAY request received while the server is not setup.")
                 else:
                     self._state = 'PLAYING'
-                    print("Server state: PLAYING")
+                    #  print("Server state: PLAYING")
                     self._rtp_ctrl.set()
 
             elif packet.request_type == RTSPPacket.PAUSE:
@@ -64,7 +64,7 @@ class Server():
                         "PLAY request received while the server is not setup.")
                 else:
                     self._state = 'READY'
-                    print("Server state: READY")
+                    #  print("Server state: READY")
                     self._rtp_ctrl.clear()
 
             elif packet.request_type == RTSPPacket.TEARDOWN:
@@ -72,7 +72,7 @@ class Server():
 
             # send RTSP response
             response = RTSPPacket.build_response(packet.seq_num, SESSION_ID)
-            print("sending response:", response)
+            #  print("sending response:", response)
             self._client.sendto(response.encode(),
                                 (self._client_addr, self._rtsp_port))
 
@@ -82,7 +82,7 @@ class Server():
         self._rtp_socket.close()
         self._video_stream.close()
         self._state = 'FINISHED'
-        print("Server state: FINISHED")
+        #  print("Server state: FINISHED")
 
     def _setup(self, packet):
         # setup RTP socket
@@ -93,7 +93,8 @@ class Server():
 
         # setup video streaming
         video_path = packet.video_path
-        print(f"Video file path: {video_path}")
+        if self.stream_type == 'file':
+            print(f"Video file path: {video_path}")
         self._video_stream = VideoStreaming(video_path, src_type=self.stream_type)
         # setup rtp thread
         self._rtp_ctrl = threading.Event()
@@ -102,7 +103,7 @@ class Server():
         self._rtp_thread.setDaemon(True)
         self._rtp_thread.start()
         self._state = 'READY'
-        print("Server state: READY")
+        #  print("Server state: READY")
 
     def _send_rtp_packet(self, event):
         first_package = True
@@ -117,7 +118,7 @@ class Server():
                 try:
                     frame = self._video_stream.get_next_frame()
                     frame_num = self._video_stream.current_frame_number
-                    print(frame_num)
+                    #  print(frame_num)
                     #  print(frame[:10], frame[-10:])
                     timestamp = frame_num // VideoStreaming.FPS * 1000
                     # reached end of video
@@ -131,16 +132,16 @@ class Server():
                 packet = RTPPacket(26, frame_num, timestamp, frame)
 
                 # send RTP packet
-                print(f"\tRTP thread: sending frame {frame_num}")
+                print(f"RTP thread: sending frame {frame_num}...", end='')
             packet_in_bytes = packet.getpacket()
 
-            print("sending RTP packet: ")
             while packet_in_bytes:
                 self._rtp_socket.sendto(packet_in_bytes[:RECV_BUFFER],
                                         (self._client_addr, self._rtp_port))
-                print(packet_in_bytes[:RECV_BUFFER])
+                #  print(packet_in_bytes[:RECV_BUFFER])
                 packet_in_bytes = packet_in_bytes[RECV_BUFFER:]
-            print("packet sent.")
+            print('done.')
+
             time_end = time.process_time()
             elapsed_time = time_end - time_start
 
